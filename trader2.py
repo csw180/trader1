@@ -9,8 +9,8 @@ secret = "6IUBTLNU02rSGQux5cIMW11W05WnoW5rRKxxSE6Z"          # 본인 값으로 
 
 k = 0.5
 base = 21
-current_ticker = 'KRW-ETC'
-currency = 'ETC'
+current_ticker = 'KRW-EOS'
+currency = current_ticker[-3:]
 baseday = dt.datetime.now()
 
 
@@ -54,6 +54,9 @@ def get_current_price(ticker):
     return pyupbit.get_orderbook(ticker=ticker)["orderbook_units"][0]["ask_price"]
 
 # 로그인
+XnBase.current_ticker = current_ticker
+print(XnBase.current_ticker)
+
 upbit = pyupbit.Upbit(access, secret)
 
 print("Autotrader init.. ", flush=True)
