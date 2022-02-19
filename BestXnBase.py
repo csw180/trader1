@@ -54,7 +54,7 @@ def get_ohlcv_custom(ticker,count,base) :
     df = sqldf(sql, locals())
     df=df.loc[0:count]
     df.set_index('_date',inplace =True)
-    # print(df)
+    print(df)
     return df
 
 def get_ror_k(k=0.5):
@@ -66,9 +66,9 @@ def get_ror_k(k=0.5):
     df['ror'] = df.apply(   \
         lambda row : (row.close / row.target) - fee if row.high > row.target else 1, axis=1)
     df['cumsum'] = (df['ror']-1).cumsum()
-    print(df)
-    ror = df['cumsum'][-1]
-    return ror
+    # print(df, flush=True)
+    cumsum = df['cumsum'][-1]
+    return cumsum
 
 def get_ror_base(k,base):
     df = get_ohlcv_custom(current_ticker,DAYS,base)
@@ -82,9 +82,9 @@ def get_ror_base(k,base):
     # 종가매도가 아닌 목표수익율 2%~3% 도달하면 판다고 가정하고 수익율 계산 : 수익이 더 줄어듬..
     # lambda row : (get_sellprice_enough(row.target , 1.03, row.high, row.close) / row.target) - fee if row.high > row.target else 1, axis=1) 
     df['cumsum'] = (df['ror']-1).cumsum()
-    # print(df)
-    ror = df['cumsum'][-1]
-    return ror
+    print(df, flush=True)
+    cumsum = df['cumsum'][-1]
+    return cumsum
 
 # 종가매도가 아닌 목표수익율 2%~3% 도달하면 판다고 가정할때 매도가격을 가져온다.
 # def get_sellprice_enough(baseP, enough, limit, ovlimit) :
@@ -95,29 +95,31 @@ def get_ror_base(k,base):
 
 def bestValue() :
     # 최적의 K 값 찾기 
-    print('----- BEST K Search.... --------------')
+    print('----- BEST K Search.... --------------', flush=True)
     kdict = {}
     for k in range(1,10,1) :
-        ror = get_ror_k(k/10)
-        kdict[str(round(ror,4))] = str(k/10) 
-        print(f'k={k/10}, ror={ror:.4f}')
+        cumsum = get_ror_k(k/10)
+        kdict[str(round(cumsum,4))] = str(k/10) 
+        print(f'k={k/10}, ror={cumsum:.4f}')
+        time.sleep(1)
 
     maxkey = max(kdict.keys(), key=(lambda k : float(k)))
     maxK = float(kdict[maxkey])
 
     # 최적의 BASE
-    print(f'----- BEST base Search Using K(={maxK})------')
+    print(f'----- BEST base Search Using K(={maxK})------', flush=True)
     basedict = {}
     for b in range(1,24,1) :
-        ror = get_ror_base(maxK,b)
-        basedict[str(round(ror,4))] = str(b)
-        print(f'base={b}, ror={ror:.4f}')
+        cumsum = get_ror_base(maxK,b)
+        basedict[str(round(cumsum,4))] = str(b)
+        print(f'base={b}, ror={cumsum:.4f}')
+        time.sleep(1)
 
     maxkey = max(basedict.keys(), key=(lambda k : float(k)))
     maxBase = int(basedict[maxkey])
-    print('==============================================================')
-    print(f'maxK = {maxK}, maxBase = {maxBase}, maxProfit_1day = {maxkey}')
-    print('===============================================================')
+    print('==============================================================', flush=True)
+    print(f'maxK = {maxK}, maxBase = {maxBase}, maxProfit_1day = {maxkey}', flush=True)
+    print('===============================================================', flush=True)
 
     return maxK,maxBase
 
@@ -128,8 +130,11 @@ if __name__ == "__main__":
     # print(df)
     # target_price = df.iloc[0]['target']
     # print(target_price)
-    K , BASE = bestValue()
-    print(f'k = {K}, base = {BASE}')
+    # K , BASE = bestValue()
+    # print(f'k = {K}, base = {BASE}')
 
     # ror = get_ror_k(0.5)
     # print(ror)
+
+    get_ohlcv_custom(current_ticker,7,8)
+    # get_ror_base(0.3,23)
