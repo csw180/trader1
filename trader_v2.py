@@ -42,13 +42,18 @@ while  True :
     print(f'ticker= {current_ticker.name}, k = {current_ticker.k}, base = {current_ticker.base}, target_price = {current_ticker.target_price}', flush=True)
     current_ticker.get_start_time()
     print(f'Day START!..{current_ticker.start_time:%Y-%m-%d %H:%M:%S} ~ {current_ticker.end_time::%Y-%m-%d %H:%M:%S},  nextday : {current_ticker.nextday:%Y-%m-%d %H:%M:%S}', flush=True)
-
+    
     current_time = dt.datetime.now()
     loop_cnt = 0
     while current_time < current_ticker.nextday :
         try:
+            if not current_ticker.isgood :
+                print(f'{current_ticker.name} not good situation. may be not ascending ...',flush=True)
+                time.sleep(600)   # 약 5분대기
+                continue
+
             loop_cnt +=1
-            if current_ticker.start_time < current_time < current_ticker.end_time :
+            if  current_ticker.start_time < current_time < current_ticker.end_time :
                 current_price = get_current_ask_price(current_ticker.name)
                 if loop_cnt >= 10 :   # 운영모드로 가면 충분히 크게 바꿀것..
                     print(f'Now : {current_time:%Y-%m-%d %H:%M:%S}, start : {current_ticker.start_time:%Y-%m-%d %H:%M:%S}, end : {current_ticker.end_time:%Y-%m-%d %H:%M:%S}, target:{current_ticker.target_price:,.2f}, current:{current_price:,}', flush=True)
@@ -56,6 +61,7 @@ while  True :
                 if current_ticker.target_price < current_price:
                     krw = get_balance("KRW")
                     print(f'get_balance(KRW): {krw}', flush=True)
+                    krw = 0
                     if krw > 5000:
                         ret = upbit.buy_limit_order(current_ticker.name, current_price, (krw*0.9995)//current_price )
                         print(f'buy_limit_order {current_ticker.name}, {krw*0.9995:.2f}', flush=True)

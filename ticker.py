@@ -1,6 +1,5 @@
 import time
 import pyupbit
-import datetime
 import pandas as pd
 # from pandasql import sqldf
 import numpy as np
@@ -48,11 +47,27 @@ class Ticker :
     #     return df
 
    
+    # def get_ohlcv_custom(self,_base) :
+    #     df = pyupbit.get_daily_ohlcv_from_base(ticker=self.name, base=_base)
+    #     df = df[::-1]
+    #     return df
+
     def get_ohlcv_custom(self,_base) :
-        df = pyupbit.get_daily_ohlcv_from_base(ticker=self.name, base=_base)
-        df = df[::-1]
-        return df
-     
+        df = pyupbit.get_ohlcv(self.name, count=600, interval='minute60')
+        df.index = df.index - dt.timedelta(hours=_base)
+        df_daily = pd.DataFrame()
+        df_daily['open'] =  df.open.resample('1D').first()
+        df_daily['close'] =  df.close.resample('1D').last()
+        df_daily['low'] =  df.low.resample('1D').min()
+        df_daily['high'] =  df.high.resample('1D').max()
+        df_daily['volume'] =  df.volume.resample('1D').sum()
+        df_daily['value'] =  df.value.resample('1D').sum()
+        df_daily['ma15'] = df_daily['close'].rolling(15).mean()
+        df_daily['ma15_acd'] = df_daily['ma15'] - df_daily['ma15'].shift(1)
+        df_daily=df_daily.dropna()
+        df_daily = df_daily[::-1]
+        return df_daily
+
     def __get_ror_k(self,k) :
         df = self.get_ohlcv_custom(self.base)  
         df['range'] = (df['high'] - df['low']) * k
@@ -84,7 +99,7 @@ class Ticker :
         for k in range(1,10,1) :
             cumsum = self.__get_ror_k(k/10)
             kdict[str(round(cumsum,4))] = str(k/10)
-            time.sleep(1)
+            time.sleep(0.2)
 
         maxkey = max(kdict.keys(), key=(lambda k : float(k)))
         maxK = float(kdict[maxkey])
@@ -94,13 +109,13 @@ class Ticker :
         for b in range(1,24,1) :
             cumsum = self.__get_ror_base(maxK,b)
             basedict[str(round(cumsum,4))] = str(b)
-            time.sleep(1)
+            time.sleep(0.2)
 
         maxkey = max(basedict.keys(), key=(lambda k : float(k)))
         maxBase = int(basedict[maxkey])
-        # print('==============================================================', flush=True)
-        # print(f'ticker = {self.name}, maxK = {maxK}, maxBase = {maxBase}, maxProfit_1day = {maxkey}', flush=True)
-        # print('===============================================================', flush=True)
+        print('==============================================================', flush=True)
+        print(f'ticker = {self.name}, maxK = {maxK}, maxBase = {maxBase}, maxProfit_1day = {maxkey}', flush=True)
+        print('===============================================================', flush=True)
 
         self.k =  maxK
         self.base = maxBase
@@ -116,6 +131,7 @@ class Ticker :
         df['cumsum'] = (df['ror']-1).cumsum()
         self.df = df
         self.target_price = self.df.iloc[0]['target'] 
+        self.isgood = True if self.df.iloc[0]['ma15_acd'] > 0 else False 
 
     def get_start_time(self) :
         basetime = dt.datetime.now()
