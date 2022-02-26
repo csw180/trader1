@@ -1,56 +1,21 @@
 import time
 import pyupbit
 import pandas as pd
-# from pandasql import sqldf
 import numpy as np
 import datetime as dt
+import pyupbit
+import upbit_trade
 
 class Ticker :
     def __init__(self, name) -> None:
         self.name =  name
-        self.currency = name[-3:]
-        self.__days = 7 
-        #업비트 거래소 매매거래 수수료
-        self.fee = 0.0005
+        self.currency = name[name.find('-')+1:]
+        self.fee = 0.0005   #업비트 거래소 매매거래 수수료
         self.k = 0.4
         self.base = 9
         self.bestValue()  # 최적의 k, base 를 세팅한다.
         self.make_df()    # k,base 를 이용하여 df 와 target_price 를 결정한다.
         self.start_time, self.end_time, self.nextday =  self.get_start_time()  # base를 이용하여 하루거래의 시간대를 설정한다
-
-    # def get_ohlcv_custom(self,base) :
-    #     df_1 = pyupbit.get_ohlcv(self.name, interval="minute60")
-    #     df_1['newdate'] = df_1.index
-    #     df_1['stickdate'] = df_1.apply(   \
-    #         lambda row : str( row.newdate + datetime.timedelta(days=-1))[:10] if 0 <= row.newdate.hour < base else str(row.newdate)[:10], axis=1)
-    #     sql =   f"""
-
-    #         with a as ( 
-    #                 select stickdate, newdate, cast(strftime('%H',newdate) as int) as hour, open, high, low, close, volume,
-    #                     row_number() over(partition by stickdate order by newdate desc) as idx
-    #                 from df_1
-    #         )
-    #         select  a.stickdate as _date
-    #             ,max(case when a.hour={base} then a.open else null end) as open
-    #             ,max(case when idx = 1 then a.close else null end) as close
-    #             ,min(a.low) as low
-    #             ,max(a.high) as high
-    #             ,sum(a.volume) as volume
-    #         from  a
-    #         group by a.stickdate
-    #         order by 1 desc
-
-    #         """
-    #     df = sqldf(sql, locals())
-    #     df=df.loc[0:self.__days]
-    #     df.set_index('_date',inplace =True)
-    #     return df
-
-   
-    # def get_ohlcv_custom(self,_base) :
-    #     df = pyupbit.get_daily_ohlcv_from_base(ticker=self.name, base=_base)
-    #     df = df[::-1]
-    #     return df
 
     def get_ohlcv_custom(self,_base) :
         df = pyupbit.get_ohlcv(self.name, count=600, interval='minute60')
@@ -113,9 +78,10 @@ class Ticker :
 
         maxkey = max(basedict.keys(), key=(lambda k : float(k)))
         maxBase = int(basedict[maxkey])
-        print('==============================================================', flush=True)
-        print(f'ticker = {self.name}, maxK = {maxK}, maxBase = {maxBase}, maxProfit_1day = {maxkey}', flush=True)
-        print('===============================================================', flush=True)
+        # maxBase = 9
+        print(f'[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] ==============================================================', flush=True)
+        print(f'[{dt.datetime.now():%Y-%m-%d %H:%M:%S}]  ticker = {self.name}, maxK = {maxK}, maxBase = {maxBase}, maxProfit_1day = {maxkey}', flush=True)
+        print(f'[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] ===============================================================', flush=True)
 
         self.k =  maxK
         self.base = maxBase
@@ -131,7 +97,10 @@ class Ticker :
         df['cumsum'] = (df['ror']-1).cumsum()
         self.df = df
         self.target_price = self.df.iloc[0]['target'] 
-        self.isgood = True if self.df.iloc[0]['ma15_acd'] > 0 else False 
+        # 일봉상 15이평선이 우상향
+        self.isgood = True if self.df.iloc[0]['ma15_acd'] > 0 else False
+        # 현재가가 일봉상 고점밑일때 이미 고점찍고 내려오는 국면일수 있다
+        self.isgood = False if pyupbit.get_current_price(self.name)*1.01 < self.df.iloc[0]['high'] else True  
 
     def get_start_time(self) :
         basetime = dt.datetime.now()
@@ -139,7 +108,7 @@ class Ticker :
         start_time = basetime.replace(hour=self.base,minute=0,second=0)
         if start_time > basetime :
             nextday = start_time
-            end_time = start_time - dt.timedelta(seconds=10)
+            end_time = start_time - dt.timedelta(minutes=10)
             start_time = start_time - dt.timedelta(days=1)
             
         else :
@@ -147,4 +116,59 @@ class Ticker :
             end_time = start_time + dt.timedelta(days=1) - dt.timedelta(seconds=10)
 
         return start_time, end_time, nextday
+
+    def do(self) :
+        # 보유코인이 있으면 목표수익율(5%)를 넘어서면 즉시 판다.
+        btc = upbit_trade.get_balance(self.currency)
+        avg_buy_price = upbit_trade.get_avg_buy_price(self.currency)
+        current_price = self.get_current_bid_price()
+        if  btc > 0 :
+            self.isgood = False
+            if  current_price > avg_buy_price * 1.03 :
+                print(f'[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] get_balance({self.name}): {btc}, avg_buy_price = {avg_buy_price}, current_price= {current_price}', flush=True)
+                if btc > ( 5000 / current_price) :
+                    upbit_trade.sell_limit_order(self.name, current_price, btc )
+            return
+
+        if not self.isgood :
+            print(f'[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] {self.name} not good position. may be not ascending ...',flush=True)
+            return
+
+        current_time = dt.datetime.now()
+        if  self.start_time < current_time < self.end_time :    
+            current_price = self.get_current_ask_price()     
+            if self.target_price < current_price:
+                krw = upbit_trade.get_balance("KRW")
+                print(f'[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] get_balance(KRW): {krw}', flush=True)
+                if krw > 5000:
+                    upbit_trade.buy_limit_order(self.name, current_price, (krw*0.999)//current_price )
+        else : 
+            if  btc:=upbit_trade.get_balance(self.currency) > 0 :
+                current_price = self.get_current_bid_price()
+                print(f'[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] get_balance({self.name}): {btc}, current_price= {current_price}', flush=True)
+                if btc > ( 5000 / current_price) :
+                    upbit_trade.sell_limit_order(self.name, current_price, btc )
             
+            print(f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] best K, base simmulation.....", flush=True)
+            self.bestValue()
+            self.make_df()
+            print(f'[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] ticker= {self.name}, k = {self.k}, base = {self.base}, target_price = {self.target_price}', flush=True)
+            self.get_start_time()
+            print(f'[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] Day START!..{self.start_time:%Y-%m-%d %H:%M:%S} ~ {self.end_time::%Y-%m-%d %H:%M:%S},  nextday : {self.nextday:%Y-%m-%d %H:%M:%S}', flush=True)
+            
+
+    def get_current_ask_price(self):  # 현재 매수가.
+        """현재가 조회"""
+        return pyupbit.get_orderbook(ticker=self.name)["orderbook_units"][0]["ask_price"]
+
+    def get_current_bid_price(self):  #현재 매도가
+        """현재가 조회"""
+        return pyupbit.get_orderbook(ticker=self.name)["orderbook_units"][0]["bid_price"]
+
+    #60분봉 3개의 거래대금 합
+    def get_current_value(self) :
+        result = 0
+        df = pyupbit.get_ohlcv(self.name, count=3, interval='minute60')  
+        if len(df.index) > 0 :
+            result = df['value'].sum()
+        return result
