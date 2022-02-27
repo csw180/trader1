@@ -78,7 +78,7 @@ while  True :
                     print_(t.name,f'{t.start_time:%Y-%m-%d %H:%M:%S} ~ {t.end_time:%Y-%m-%d %H:%M:%S}, target:{t.target_price:,.2f}, current:{pyupbit.get_current_price(t.name):,}')
                     loop_cnt = 0
 
-                current_price = pyupbit.get_orderbook(ticker=t.name)["orderbook_units"][0]["ask_price"]     
+                current_price = float(pyupbit.get_orderbook(ticker=t.name)["orderbook_units"][0]["ask_price"]) 
                 if t.target_price < current_price:
                     krw = upbit_trade.get_balance("KRW")
                     print_(t.name,f'get_balance(KRW): {krw}')

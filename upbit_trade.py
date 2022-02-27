@@ -31,7 +31,7 @@ def sell_enough_price():
         if  not (b['currency'] == 'KRW') :
             # 보유코인이 있으면 목표수익율(5%)를 넘어서면 즉시 판다.
             current_ticker = 'KRW-'+b['currency']
-            btc, avg_buy_price, current_price = float(b['balance']), b['avg_buy_price'],pyupbit.get_orderbook(ticker=current_ticker)["orderbook_units"][0]["bid_price"]
+            btc, avg_buy_price, current_price = float(b['balance']), float(b['avg_buy_price']),float(pyupbit.get_orderbook(ticker=current_ticker)["orderbook_units"][0]["bid_price"])
             if  btc > 0 :
                 ret=True
                 print_(current_ticker, f'Enough price TEST btc={btc}, avg_buy_price = {avg_buy_price}, current_price= {current_price}')
