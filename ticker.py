@@ -110,8 +110,8 @@ class Ticker :
         self.target_price = self.df.iloc[0]['target'] 
         # 일봉상 15이평선이 우상향
         self.isgood = True if self.df.iloc[0]['ma15_acd'] > 0 else False
-        # 현재가가 일봉상 고점밑일때 이미 고점찍고 내려오는 국면일수 있다
-        self.isgood = False if pyupbit.get_current_price(self.name)*1.01 < self.df.iloc[0]['high'] else True  
+        # 이미 목표가에 도달했었던 적있는 경우는 제외
+        self.isgood = self.isgood and ( False if self.df.iloc[0]['high'] > self.target_price else True )
 
     def get_start_time(self) :
         basetime = dt.datetime.now()
@@ -159,3 +159,10 @@ class Ticker :
     # def get_current_bid_price(self):  #현재 매도가
     #     """현재가 조회"""
     #     return pyupbit.get_orderbook(ticker=self.name)["orderbook_units"][0]["bid_price"]
+
+if __name__ == "__main__":
+    t  = Ticker('KRW-MANA')
+    t.bestValue()
+    t.make_df()
+    print(t.df)
+    print(t.isgood)
