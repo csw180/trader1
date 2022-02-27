@@ -30,6 +30,16 @@ def best_volume_tickers() :
         ticker.make_df()
         if  ticker.isgood :
             tickers.append(ticker)
+    
+    balanced_tickers = upbit_trade.get_balanced_tickers()
+    for bt in balanced_tickers :
+        if  not (tickers and tickers.count(bt)) :
+            ticker = Ticker(bt)
+            ticker.bestValue()
+            ticker.make_df()
+            ticker.isgood = True  # 잔고가 있는 종목은 무조건 대상
+            tickers.append(ticker)
+
     return tickers
 
 print(f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] Autotrader init.. ", flush=True)

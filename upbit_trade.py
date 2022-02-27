@@ -24,7 +24,7 @@ def get_balance(ticker):
     return 0
 
 def sell_enough_price():
-    """잔고 조회"""
+    """종가매도전이라도 목표수익율에 도달하면 즉시 매도"""
     ret = False   # 보유중인 코인이 없는 경우 False 로 리턴
     balances = upbit.get_balances()
     for b in balances:
@@ -35,12 +35,12 @@ def sell_enough_price():
             if  btc > 0 :
                 ret=True
                 print_(current_ticker, f'Enough price TEST btc={btc}, avg_buy_price = {avg_buy_price}, current_price= {current_price}')
-                if  current_price > avg_buy_price * 1.03 :
+                if  current_price > avg_buy_price * 1.015 :
                     sell_limit_order(current_ticker, current_price, btc )
     return ret
 
 def get_avg_buy_price(ticker):
-    """잔고 조회"""
+    """매수평균가"""
     balances = upbit.get_balances()
     for b in balances:
         if b['currency'] == ticker:
@@ -52,13 +52,13 @@ def get_avg_buy_price(ticker):
 
 def  sell_limit_order(ticker,price,amount) :
     ret = upbit.sell_limit_order(ticker, price, amount)
-    print(f'[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] sell_limit_order {ticker}, {price:.2f}, {amount:.2f}', flush=True)
-    print(f'[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] sell_limit_order ret = {ret}' , flush=True)
+    print(ticker,f'sell_limit_order {price:.2f}, {amount:.2f}')
+    print(ticker,f'sell_limit_order ret = {ret}')
 
 def  buy_limit_order(ticker,price,amount) :
     ret = upbit.buy_limit_order(ticker, price, amount )
-    print(f'[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] buy_limit_order {ticker}, {price:.2f}, {amount:.2f}', flush=True)
-    print(f'[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] buy_limit_order ret = {ret}' , flush=True)
+    print_(ticker,f'buy_limit_order {price:.2f}, {amount:.2f}')
+    print_(ticker,f'buy_limit_order ret = {ret}')
 
 if __name__ == "__main__":
     pass

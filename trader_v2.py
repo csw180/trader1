@@ -48,7 +48,7 @@ print_('',f"best_volume_tickers finished.. count={len(tickers)} tickers={tickers
 # print_('',f"best_volume_tickers finished.. count={len(tickers)} tickers={tickers}")
 
 loop_cnt = 0
-print_loop = 10
+print_loop = 20
 # 자동매매 시작
 while  True :
     loop_cnt +=1
@@ -73,7 +73,7 @@ while  True :
                 print_(t.name,f'k = {t.k}, base = {t.base}, target_price = {t.target_price}')
                 print_(t.name,f'New Day START!..{t.start_time:%Y-%m-%d %H:%M:%S} ~ {t.end_time::%Y-%m-%d %H:%M:%S}, nextday : {t.nextday:%Y-%m-%d %H:%M:%S}')
 
-            elif  t.start_time < current_time < t.end_time  and t.isgood:    
+            elif  t.start_time < current_time < t.end_time :    
                 if loop_cnt >= print_loop :   # 운영모드로 가면 충분히 크게 바꿀것..
                     print_(t.name,f'{t.start_time:%Y-%m-%d %H:%M:%S} ~ {t.end_time:%Y-%m-%d %H:%M:%S}, target:{t.target_price:,.2f}, current:{pyupbit.get_current_price(t.name):,}')
                     loop_cnt = 0
@@ -87,8 +87,9 @@ while  True :
             else : 
                 if  btc:=upbit_trade.get_balance(t.currency) > 0 :
                     current_price = t.get_current_bid_price()
-                    print_(t.name,f'get_balance({t.currency}): {btc}, current_price= {current_price}')
+                    print_(t.name,f'force to sell unconditionally get_balance({t.currency}): {btc}, current_price= {current_price}')
                     upbit_trade.sell_limit_order(t.name, current_price, btc )
+                    print_(t.name,'excluded from ticker list')
                     tickers.remove(t)
                     break
                         
