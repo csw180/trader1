@@ -40,15 +40,8 @@ def best_volume_tickers() :
 print_('',f"Autotrader init.. ")
 tickers = best_volume_tickers()
 print_('',f"best_volume_tickers finished.. count={len(tickers)} tickers={tickers}")
-
-# standby_time_best_volume_tickers = dt.datetime.now()
-# standby_time_best_volume_tickers = standby_time_best_volume_tickers.replace(hour=18,minute=20,second=0)
-# if dt.datetime.now() > standby_time_best_volume_tickers :
-#     standby_time_best_volume_tickers = standby_time_best_volume_tickers + dt.timedelta(days=1)
-# print_('',f"best_volume_tickers finished.. count={len(tickers)} tickers={tickers}")
-
 loop_cnt = 0
-print_loop = 20
+print_loop = 300
 # 자동매매 시작
 while  True :
     loop_cnt +=1
@@ -92,14 +85,6 @@ while  True :
                     print_(t.name,'excluded from ticker list')
                     tickers.remove(t)
                     break
-                        
-        # if  current_time > standby_time_best_volume_tickers:
-        #     tickers = best_volume_tickers()
-        #     print_('',f"best_volume search finished.. count={len(tickers)} tickers={tickers}")
-        #     standby_time_best_volume_tickers = standby_time_best_volume_tickers + dt.timedelta(days=1)
-        # else :
-        #     time.sleep(1)
-
         time.sleep(1)
     except Exception as e:
         print_('',f'{e}')
