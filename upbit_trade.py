@@ -13,7 +13,7 @@ def print_(ticker,msg)  :
     print(ret, flush=True)
 
 def get_balance(ticker):
-    """잔고 조회"""
+    """잔고 조회(한종목)"""
     balances = upbit.get_balances()
     for b in balances:
         if b['currency'] == ticker:
@@ -23,21 +23,19 @@ def get_balance(ticker):
                 return 0
     return 0
 
-def sell_enough_price():
-    """종가매도전이라도 목표수익율에 도달하면 즉시 매도"""
-    ret = False   # 보유중인 코인이 없는 경우 False 로 리턴
+def get_balances():
+    """잔고 조회(보유종목전체)"""
+    ret_list = []
+    tmp_dict = {}
     balances = upbit.get_balances()
     for b in balances:
-        if  not (b['currency'] == 'KRW') :
-            # 보유코인이 있으면 목표수익율(5%)를 넘어서면 즉시 판다.
-            current_ticker = 'KRW-'+b['currency']
-            btc, avg_buy_price, current_price = float(b['balance']), float(b['avg_buy_price']),float(pyupbit.get_orderbook(ticker=current_ticker)["orderbook_units"][0]["bid_price"])
-            if  btc > 0 :
-                ret=True
-                print_(current_ticker, f'Enough price TEST btc={btc}, avg_buy_price = {avg_buy_price}, current_price= {current_price}')
-                if  current_price > avg_buy_price * 1.015 :
-                    sell_limit_order(current_ticker, current_price, btc )
-    return ret
+        tmp_dict.clear()
+        if b['balance'] is not None and not (b['currency'] == 'KRW') :
+            tmp_dict['currency'] = b['currency']
+            tmp_dict['balance'] = b['balance']
+            tmp_dict['avg_buy_price'] = b['avg_buy_price']
+            ret_list.append(tmp_dict)
+    return tmp_dict
 
 def get_avg_buy_price(ticker):
     """매수평균가"""
