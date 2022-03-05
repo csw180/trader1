@@ -78,7 +78,7 @@ class Ticker :
         for k in range(1,10,1) :
             cumsum = self.__get_ror_k(k/10)
             kdict[str(round(cumsum,4))] = str(k/10)
-            time.sleep(0.2)
+            time.sleep(0.5)
 
         maxkey = max(kdict.keys(), key=(lambda k : float(k)))
         maxK = float(kdict[maxkey])
@@ -88,7 +88,7 @@ class Ticker :
         for b in range(1,24,1) :
             cumsum = self.__get_ror_base(maxK,b)
             basedict[str(round(cumsum,4))] = str(b)
-            time.sleep(0.2)
+            time.sleep(0.5)
 
         maxkey = max(basedict.keys(), key=(lambda k : float(k)))
         maxBase = int(basedict[maxkey])
