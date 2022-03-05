@@ -85,7 +85,7 @@ while  True :
             elif  t.start_time < current_time < t.end_time :    
                 # 이미 잔고가 있는 종목은 목표가에 왔는지 확인하고 즉시 매도 처리 한다.
                 if  btc:=upbit_trade.get_balance(t.currency) > 0 :
-                    current_price = t.get_current_bid_price()
+                    current_price = float(pyupbit.get_orderbook(ticker=t.name)["orderbook_units"][0]["bid_price"])
                     avg_buy_price = upbit_trade.get_avg_buy_price(t.currency)
                     print_(t.name,f'Enough price TEST btc=({t.currency}): {btc}, avg_buy_price = {avg_buy_price}, current_price= {current_price}')
                     if  current_price > avg_buy_price * 1.025 :
@@ -109,7 +109,7 @@ while  True :
 
             else : 
                 if  btc:=upbit_trade.get_balance(t.currency) > 0 :
-                    current_price = t.get_current_bid_price()
+                    current_price = float(pyupbit.get_orderbook(ticker=t.name)["orderbook_units"][0]["bid_price"])
                     print_(t.name,f'force to sell unconditionally get_balance({t.currency}): {btc}, current_price= {current_price}')
                     upbit_trade.sell_limit_order(t.name, current_price, btc )
                     print_(t.name,'excluded from ticker list')
