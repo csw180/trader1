@@ -35,7 +35,7 @@ def get_balances():
             tmp_dict['balance'] = b['balance']
             tmp_dict['avg_buy_price'] = b['avg_buy_price']
             ret_list.append(tmp_dict)
-    return tmp_dict
+    return ret_list
 
 def get_avg_buy_price(ticker):
     """매수평균가"""

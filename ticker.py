@@ -21,6 +21,7 @@ class Ticker :
         self.fee = 0.0005   #업비트 거래소 매매거래 수수료
         self.k = 0.4
         self.base = 9
+        self.isgood = True
         self.bestValue()  # 최적의 k, base 를 세팅한다.
         self.make_df()    # k,base 를 이용하여 df 와 target_price 를 결정한다.
         self.get_start_time()  # base를 이용하여 하루거래의 시간대를 설정한다
@@ -97,21 +98,24 @@ class Ticker :
         self.k =  maxK
         self.base = maxBase
 
-    def make_df(self) :
-        df = self.get_ohlcv_custom(self.base)  
-        df['range'] = (df['high'] - df['low']) * self.k
-        df['target'] = df['open'] + df['range'].shift(-1)
-        df=df.dropna()
 
-        df['ror'] = df.apply(   \
-            lambda row : (row.close / row.target) - self.fee if row.high > row.target else 1, axis=1)
-        df['cumsum'] = (df['ror']-1).cumsum()
-        self.df = df
-        self.target_price = self.df.iloc[0]['target'] 
-        # 일봉상 15이평선이 우상향
-        self.isgood = True if self.df.iloc[0]['ma15_acd'] > 0 else False
-        # 이미 목표가에 도달했었던 적있는 경우는 제외
-        self.isgood = self.isgood and ( False if self.df.iloc[0]['high'] > self.target_price else True )
+    def make_df(self) :
+        try :
+            df = self.get_ohlcv_custom(self.base)  
+            df['range'] = (df['high'] - df['low']) * self.k
+            df['target'] = df['open'] + df['range'].shift(-1)
+            df=df.dropna()
+            df['ror'] = df.apply(   \
+                lambda row : (row.close / row.target) - self.fee if row.high > row.target else 1, axis=1)
+            df['cumsum'] = (df['ror']-1).cumsum()
+            self.df = df
+            self.target_price = self.df.iloc[0]['target'] 
+            # 일봉상 15이평선이 우상향
+            self.isgood = True if self.df.iloc[0]['ma15_acd'] > 0 else False
+            # 이미 목표가에 도달했었던 적있는 경우는 제외
+            self.isgood = self.isgood and ( False if self.df.iloc[0]['high'] > self.target_price else True )
+        except Exception :
+            pass
 
     def get_start_time(self) :
         basetime = dt.datetime.now()
@@ -131,8 +135,10 @@ class Ticker :
         self.nextday = nextday
 
 if __name__ == "__main__":
-    t  = Ticker('KRW-MANA')
-    t.bestValue()
-    t.make_df()
-    print(t.df)
-    print(t.isgood)
+    # print('KRW-T'['KRW-T'.find('-')+1:])
+
+    t  = Ticker('KRW-T')
+    # t.bestValue()
+    # t.make_df()
+    # print(t.df)
+    # print(t.isgood)

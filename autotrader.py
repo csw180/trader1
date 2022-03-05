@@ -21,14 +21,17 @@ def best_volume_tickers() :
     for k, v in all_tickers_prices.items() :
         if  v < 90000 :   # 단가가 9만원 미만인 것만...
             df = pyupbit.get_ohlcv(k, count=3, interval='minute60')  #60분봉 3개의 거래대금 합을 가져오기 위함
-            time.sleep(0.5)
+            time.sleep(0.2)
             if len(df.index) > 0 :
+                if  k == 'KRW-T' :  #상장된지 얼마안된건 제외.에러남.
+                    continue
                 all_tickers_value[k] = df['value'].sum()
 
     # 거래대금 top 10 에 해당하는 종목만 걸러낸다
     sorted_list = sorted(all_tickers_value.items(), key=lambda x : x[1], reverse=True)[:10]
     top_tickers = [e[0] for e in sorted_list]
     tickers = []
+    print_('',f'top_ticker= {top_tickers}')
     for  t in  top_tickers :
         ticker = Ticker(t)
         ticker.bestValue()
@@ -40,7 +43,8 @@ def best_volume_tickers() :
     balances = upbit_trade.get_balances()
     for b in balances :
         rt = True
-        tmp_ticker = 'KRW-' + b['currency']
+        tmp_ticker = b['currency']
+        tmp_ticker = 'KRW-' + tmp_ticker
         for t in tickers :
             if (tmp_ticker == t.name) :
                 rt=False
@@ -87,7 +91,8 @@ while  True :
                 if  btc:=upbit_trade.get_balance(t.currency) > 0 :
                     current_price = float(pyupbit.get_orderbook(ticker=t.name)["orderbook_units"][0]["bid_price"])
                     avg_buy_price = upbit_trade.get_avg_buy_price(t.currency)
-                    print_(t.name,f'Enough price TEST btc=({t.currency}): {btc}, avg_buy_price = {avg_buy_price}, current_price= {current_price}')
+                    if loop_cnt >= print_loop-5 :   # 운영모드로 가면 충분히 크게 바꿀것..
+                        print_(t.name,f'Enough price TEST btc=({t.currency}): {btc}, avg_buy_price = {avg_buy_price}, current_price= {current_price}')
                     if  current_price > avg_buy_price * 1.025 :
                         upbit_trade.sell_limit_order(t.name, current_price, btc )
                         print_(t.name,'excluded from ticker list')
@@ -95,7 +100,7 @@ while  True :
                             tickers.remove(t)
                         except ValueError :
                             pass
-                        break
+                    break
 
                 if loop_cnt >= print_loop :   # 운영모드로 가면 충분히 크게 바꿀것..
                     print_(t.name,f'{t.start_time:%Y-%m-%d %H:%M:%S} ~ {t.end_time:%Y-%m-%d %H:%M:%S}, target:{t.target_price:,.2f}, current:{pyupbit.get_current_price(t.name):,}')
@@ -106,7 +111,6 @@ while  True :
                     print_(t.name,f'get_balance(KRW): {krw}')
                     if krw > 5000:
                         upbit_trade.buy_limit_order(t.name, current_price, (krw*0.999)//current_price )
-
             else : 
                 if  btc:=upbit_trade.get_balance(t.currency) > 0 :
                     current_price = float(pyupbit.get_orderbook(ticker=t.name)["orderbook_units"][0]["bid_price"])
