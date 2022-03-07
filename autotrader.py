@@ -79,12 +79,12 @@ while  True :
 
         current_time = dt.datetime.now()
         for t in  tickers :
-            if  current_time > t.nextday :                
-                t.bestValue()
-                t.make_df()
-                t.get_start_time()
-                print_(t.name,f'k = {t.k}, base = {t.base}, target_price = {t.target_price}')
-                print_(t.name,f'New Day START!..{t.start_time:%Y-%m-%d %H:%M:%S} ~ {t.end_time::%Y-%m-%d %H:%M:%S}, nextday : {t.nextday:%Y-%m-%d %H:%M:%S}')
+            if  current_time > t.nextday :       
+                try :
+                    tickers.remove(t)
+                except ValueError :
+                    pass         
+                break
 
             elif  t.start_time < current_time < t.end_time :    
                 # 이미 잔고가 있는 종목은 목표가에 왔는지 확인하고 즉시 매도 처리 한다.
