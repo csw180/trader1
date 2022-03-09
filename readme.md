@@ -25,3 +25,4 @@ Ubuntu 서버 명령어 주요 명령어 정리
 12. 프로세스 종료(PID는 ps ax | grep .py를 했을때 확인 가능): kill -9 PID
 13. git clone https://github.com/csw180/trader1.git
 14. nohup python3 autotrader.py > output.log &
+15. ssh -i "romanticCoder.pem" ubuntu@ec2-18-205-238-89.compute-1.amazonaws.com
