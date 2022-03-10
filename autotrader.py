@@ -71,7 +71,7 @@ while  True :
             loop_cnt = 0
 
         if  not tickers :
-            print_('',f"None tickers selected. bestVolume search again after 30 minute sleep")
+            print_('',f"None tickers selected. bestVolume search again after 1 minute sleep")
             time.sleep(60)
             tickers = best_volume_tickers()
             print_('',f"best_volume search finished.. count={len(tickers)} tickers={tickers}")
@@ -81,6 +81,7 @@ while  True :
         for t in  tickers :
             if  current_time > t.nextday :       
                 try :
+                    print_(t.name,'excluded from ticker list')
                     tickers.remove(t)
                 except ValueError :
                     pass         
@@ -94,7 +95,7 @@ while  True :
                     avg_buy_price = upbit_trade.get_avg_buy_price(t.currency)
                     if print_loop-5 <= loop_cnt < print_loop-3 :   # 운영모드로 가면 충분히 크게 바꿀것..
                         print_(t.name,f'Enough price TEST btc=({t.currency}): {btc}, avg_buy_price = {avg_buy_price}, current_price= {current_price}')
-                    if  current_price > avg_buy_price * 1.025 :
+                    if  current_price > avg_buy_price * 1.015 :
                         upbit_trade.sell_limit_order(t.name, current_price, btc )
                         print_(t.name,'excluded from ticker list')
                         try :
@@ -111,7 +112,7 @@ while  True :
                     krw = upbit_trade.get_balance("KRW")
                     print_(t.name,f'get_balance(KRW): {krw}')
                     if krw > 5000:
-                        upbit_trade.buy_limit_order(t.name, current_price, (krw*0.999)//current_price )
+                        upbit_trade.buy_limit_order(t.name, current_price, ((100000 if krw >= 100000 else krw) * 0.999)//current_price )
             else : 
                 btc=upbit_trade.get_balance(t.currency) 
                 if  btc > 0 :

@@ -42,8 +42,8 @@ class Ticker :
         df_daily['high'] =  df.high.resample('1D').max()
         df_daily['volume'] =  df.volume.resample('1D').sum()
         df_daily['value'] =  df.value.resample('1D').sum()
-        df_daily['ma15'] = df_daily['close'].rolling(15).mean()
-        df_daily['ma15_acd'] = df_daily['ma15'] - df_daily['ma15'].shift(1)
+        df_daily['ma5'] = df_daily['close'].rolling(5).mean()
+        df_daily['ma5_acd'] = df_daily['ma5'] - df_daily['ma5'].shift(1)
         df_daily=df_daily.dropna()
         df_daily = df_daily[::-1]
         return df_daily
@@ -102,18 +102,20 @@ class Ticker :
     def make_df(self) :
         try :
             df = self.get_ohlcv_custom(self.base)  
-            df['range'] = (df['high'] - df['low']) * self.k
+            # df['range'] = (df['high'] - df['low']) * self.k
+            df['range'] = (df['high'] - df['close']) * self.k
             df['target'] = df['open'] + df['range'].shift(-1)
             df=df.dropna()
-            df['ror'] = df.apply(   \
-                lambda row : (row.close / row.target) - self.fee if row.high > row.target else 1, axis=1)
-            df['cumsum'] = (df['ror']-1).cumsum()
+            # df['ror'] = df.apply(   \
+            #     lambda row : (row.close / row.target) - self.fee if row.high > row.target else 1, axis=1)
+            # df['cumsum'] = (df['ror']-1).cumsum()
             self.df = df
             self.target_price = self.df.iloc[0]['target'] 
-            # 일봉상 15이평선이 우상향
-            self.isgood = True if self.df.iloc[0]['ma15_acd'] > 0 else False
+            # 일봉상 5이평선이 우상향
+            self.isgood = True if self.df.iloc[0]['ma5_acd'] > 0 else False
             # 이미 목표가에 도달했었던 적있는 경우는 제외
             self.isgood = self.isgood and ( False if self.df.iloc[0]['high'] > self.target_price else True )
+            self.isgood = self.isgood and ( True if self.df.iloc[1]['close'] > self.df.iloc[1]['open'] else False )
         except Exception :
             pass
 
@@ -137,8 +139,8 @@ class Ticker :
 if __name__ == "__main__":
     # print('KRW-T'['KRW-T'.find('-')+1:])
 
-    t  = Ticker('KRW-T')
-    # t.bestValue()
-    # t.make_df()
-    # print(t.df)
-    # print(t.isgood)
+    t  = Ticker('KRW-OMG')
+    t.bestValue()
+    t.make_df()
+    print(t.df)
+    print(t.isgood)
