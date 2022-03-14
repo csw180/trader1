@@ -102,13 +102,9 @@ class Ticker :
     def make_df(self) :
         try :
             df = self.get_ohlcv_custom(self.base)  
-            # df['range'] = (df['high'] - df['low']) * self.k
             df['range'] = (df['high'] - df['close']) * self.k
             df['target'] = df['open'] + df['range'].shift(-1)
             df=df.dropna()
-            # df['ror'] = df.apply(   \
-            #     lambda row : (row.close / row.target) - self.fee if row.high > row.target else 1, axis=1)
-            # df['cumsum'] = (df['ror']-1).cumsum()
             self.df = df
             self.target_price = self.df.iloc[0]['target'] 
             # 일봉상 5이평선이 우상향
