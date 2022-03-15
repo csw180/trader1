@@ -59,7 +59,7 @@ def  sell_limit_order(ticker,price,amount) :
         balance =  float(t['balance'])
         t['balance'] = balance - amount
         if balance <= 0 :
-            del dict_balances[ticker]
+            del dict_balances[currency]
 
         t = dict_balances['KRW']
         balance =  float(t['balance'])
