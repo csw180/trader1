@@ -102,7 +102,7 @@ class Ticker :
     def make_df(self) :
         try :
             df = self.get_ohlcv_custom(self.base)  
-            df['range'] = (df['high'] - df['close']) * self.k
+            df['range'] = (df['high'] - df['low']) * self.k
             df['target'] = df['open'] + df['range'].shift(-1)
             df=df.dropna()
             self.df = df

@@ -111,7 +111,7 @@ while  True :
                 if t.target_price < current_price:
                     krw = upbit_trade.get_balance("KRW")
                     print_(t.name,f'get_balance(KRW): {krw}')
-                    if krw > 5000:
+                    if (krw > 5000) and (krw > current_price):
                         upbit_trade.buy_limit_order(t.name, current_price, ((100000 if krw >= 100000 else krw) * 0.999)//current_price )
             else : 
                 btc=upbit_trade.get_balance(t.currency) 

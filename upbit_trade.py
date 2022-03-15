@@ -53,8 +53,9 @@ def get_avg_buy_price(ticker):
 
 def  sell_limit_order(ticker,price,amount) :
     print_(ticker,f'sell_limit_order {price:,.4f}, {amount:,.4f}')
+    currency = ticker[ticker.find('-')+1:]
     try :
-        t = dict_balances[ticker]
+        t = dict_balances[currency]
         balance =  float(t['balance'])
         t['balance'] = balance - amount
         if balance <= 0 :
@@ -68,23 +69,22 @@ def  sell_limit_order(ticker,price,amount) :
             json.dump(dict_balances, f)
     except KeyError as ke :
         print_(ticker,f'sell_limit_order ticker not found {ke}')
-    print_('',dict_balances)
     
-
 def  buy_limit_order(ticker,price,amount) :
     print_(ticker,f'buy_limit_order {price:,.4f}, {amount:,.4f}')
+    currency = ticker[ticker.find('-')+1:]
     try :
-        t = dict_balances[ticker]
+        t = dict_balances[currency]
         balance =  float(t['balance'])
         avg_buy_price =  float(t['avg_buy_price'])
         t['balance'] = balance + amount
         t['avg_buy_price'] = (avg_buy_price + price) / balance
     except KeyError as ke :
         dict_tmp = {}
-        dict_tmp['currency'] = ticker
+        dict_tmp['currency'] = currency
         dict_tmp['balance'] = amount
         dict_tmp['avg_buy_price'] = price
-        dict_balances[ticker] = dict_tmp
+        dict_balances[currency] = dict_tmp
 
     t = dict_balances['KRW']
     balance =  float(t['balance'])
@@ -92,7 +92,6 @@ def  buy_limit_order(ticker,price,amount) :
     
     with open('balances.json', 'w') as f:
         json.dump(dict_balances, f)
-    print_('',dict_balances)
 
 init()
 
