@@ -27,10 +27,10 @@ def init() :
         with open('balances.json', 'w') as f:
             json.dump(dict_balances, f)
 
-def get_balance(ticker):
+def get_balance(currency):
     """잔고 조회(한종목)"""
     try :
-        t = dict_balances[ticker]
+        t = dict_balances[currency]
         return float(t['balance'])
     except KeyError as ke :
         return 0
@@ -43,10 +43,10 @@ def get_balances():
             ret_list.append(v.copy())
     return ret_list
 
-def get_avg_buy_price(ticker):
+def get_avg_buy_price(currency):
     """매수평균가"""
     try :
-        t = dict_balances[ticker]
+        t = dict_balances[currency]
         return float(t['avg_buy_price'])
     except KeyError as ke :
         return 0
@@ -59,7 +59,7 @@ def  sell_limit_order(ticker,price,amount) :
         balance =  float(t['balance'])
         t['balance'] = balance - amount
         if balance <= 0 :
-            del dict_balances[currency]
+            del dict_balances[ticker]
 
         t = dict_balances['KRW']
         balance =  float(t['balance'])
