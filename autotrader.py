@@ -2,7 +2,7 @@ import time
 import pyupbit
 import datetime as dt
 from ticker import Ticker
-import upbit_trade
+import account
 
 def print_(ticker,msg)  :
     if  ticker :
@@ -40,7 +40,7 @@ def best_volume_tickers() :
             tickers.append(ticker)
 
     # 이미 잔고가 있는 종목은 거래대금TOP10 리스트에 강제 추가 한다
-    balances = upbit_trade.get_balances()
+    balances = account.get_balances()
     for b in balances :
         rt = True
         tmp_ticker = b['currency']
@@ -89,14 +89,14 @@ while  True :
 
             elif  t.start_time < current_time < t.end_time :    
                 # 이미 잔고가 있는 종목은 목표가에 왔는지 확인하고 즉시 매도 처리 한다.
-                btc=upbit_trade.get_balance(t.currency)
+                btc=account.get_balance(t.currency)
                 if  btc > 0 :
                     current_price = float(pyupbit.get_orderbook(ticker=t.name)["orderbook_units"][0]["bid_price"])
-                    avg_buy_price = upbit_trade.get_avg_buy_price(t.currency)
+                    avg_buy_price = account.get_avg_buy_price(t.currency)
                     if print_loop-5 <= loop_cnt < print_loop-3 :   # 운영모드로 가면 충분히 크게 바꿀것..
                         print_(t.name,f'Enough price TEST btc=({t.currency}): {btc}, avg_buy_price = {avg_buy_price}, current_price= {current_price}')
                     if  current_price > avg_buy_price * 1.015 :
-                        upbit_trade.sell_limit_order(t.name, current_price, btc )
+                        account.sell_limit_order(t.name, current_price, btc )
                         print_(t.name,'excluded from ticker list')
                         try :
                             tickers.remove(t)
@@ -109,16 +109,16 @@ while  True :
 
                 current_price = float(pyupbit.get_orderbook(ticker=t.name)["orderbook_units"][0]["ask_price"]) 
                 if t.target_price < current_price:
-                    krw = upbit_trade.get_balance("KRW")
+                    krw = account.get_balance("KRW")
                     print_(t.name,f'get_balance(KRW): {krw}')
                     if (krw > 5000) and (krw > current_price):
-                        upbit_trade.buy_limit_order(t.name, current_price, ((100000 if krw >= 100000 else krw) * 0.999)//current_price )
+                        account.buy_limit_order(t.name, current_price, ((100000 if krw >= 100000 else krw) * 0.999)//current_price )
             else : 
-                btc=upbit_trade.get_balance(t.currency) 
+                btc=account.get_balance(t.currency) 
                 if  btc > 0 :
                     current_price = float(pyupbit.get_orderbook(ticker=t.name)["orderbook_units"][0]["bid_price"])
                     print_(t.name,f'force to sell unconditionally get_balance({t.currency}): {btc}, current_price= {current_price}')
-                    upbit_trade.sell_limit_order(t.name, current_price, btc )
+                    account.sell_limit_order(t.name, current_price, btc )
                     print_(t.name,'excluded from ticker list')
                     try :
                         tickers.remove(t)
