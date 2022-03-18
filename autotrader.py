@@ -31,7 +31,6 @@ def best_volume_tickers() :
     sorted_list = sorted(all_tickers_value.items(), key=lambda x : x[1], reverse=True)[:10]
     top_tickers = [e[0] for e in sorted_list]
     tickers = []
-    print_('',f'top_ticker= {top_tickers}')
     for  t in  top_tickers :
         ticker = Ticker(t)
         ticker.bestValue()
@@ -47,14 +46,16 @@ def best_volume_tickers() :
         tmp_ticker = 'KRW-' + tmp_ticker
         for t in tickers :
             if (tmp_ticker == t.name) :
+                print(t.df, flush=True)
                 rt=False
                 break
         if  rt :
             ticker = Ticker(tmp_ticker)
             ticker.bestValue()
             ticker.make_df()
+            print(ticker.df, flush=True)
             tickers.append(ticker)
-
+    print_('',f'tickers= {tickers}')
     return tickers
 
 print_('',f"Autotrader init.. ")
