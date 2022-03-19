@@ -1,6 +1,7 @@
 import time
 import pyupbit
 import datetime as dt
+import pandas as pd
 from ticker import Ticker
 import account
 
@@ -46,21 +47,21 @@ def best_volume_tickers() :
         tmp_ticker = 'KRW-' + tmp_ticker
         for t in tickers :
             if (tmp_ticker == t.name) :
-                print(t.df, flush=True)
                 rt=False
                 break
         if  rt :
             ticker = Ticker(tmp_ticker)
             ticker.bestValue()
             ticker.make_df()
-            print(ticker.df, flush=True)
             tickers.append(ticker)
-    print_('',f'tickers= {tickers}')
     return tickers
 
 print_('',f"Autotrader init.. ")
 tickers = best_volume_tickers()
 print_('',f"best_volume_tickers finished.. count={len(tickers)} tickers={tickers}")
+for t in tickers :
+    pd.set_option('display.max_columns', None)
+    print(t.df.head(10), flush=True)
 loop_cnt = 0
 print_loop = 100
 
@@ -76,6 +77,9 @@ while  True :
             time.sleep(60)
             tickers = best_volume_tickers()
             print_('',f"best_volume search finished.. count={len(tickers)} tickers={tickers}")
+            for t in tickers :
+                pd.set_option('display.max_columns', None)
+                print(t.df.head(10), flush=True)
             continue
 
         current_time = dt.datetime.now()
