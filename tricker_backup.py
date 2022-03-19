@@ -22,6 +22,9 @@ class Ticker :
         self.k = 0.4
         self.base = 9
         self.isgood = True
+        self.bestValue()  # 최적의 k, base 를 세팅한다.
+        self.make_df()    # k,base 를 이용하여 df 와 target_price 를 결정한다.
+        self.get_start_time()  # base를 이용하여 하루거래의 시간대를 설정한다
 
     def __repr__(self):
         return f"<Ticker {self.name}>"
@@ -45,11 +48,11 @@ class Ticker :
         df_daily = df_daily[::-1]
         return df_daily
 
-    def get_ror_k(self,k,base) :
-        df = self.get_ohlcv_custom(base)  
+    def __get_ror_k(self,k) :
+        df = self.get_ohlcv_custom(self.base)  
         df['range'] = (df['high'] - df['low']) * k
         df['target'] = df['open'] + df['range'].shift(-1)
-        df=df.head(7)
+        df=df.dropna()
 
         df['ror'] = df.apply(   \
             lambda row : (row.close / row.target) - self.fee if row.high > row.target else 1, axis=1)
@@ -57,39 +60,43 @@ class Ticker :
         cumsum = df['cumsum'][-1]
         return cumsum
 
-    def get_loss_base(self,base):
+    def __get_ror_base(self,k,base):
         df = self.get_ohlcv_custom(base)
-        df['loss'] = df['open'] - df['low']
-        df['cumloss'] = df['loss'].cumsum()
-        df=df.head(7)
-        cumloss = df['cumloss'][-1]
-        return cumloss
+        df['range'] = (df['high'] - df['low']) * k
+        df['target'] = df['open'] + df['range'].shift(-1)
+        df=df.dropna()
+
+        df['ror'] = df.apply(   \
+            lambda row : (row.close / row.target) - self.fee if row.high > row.target else 1, axis=1)
+
+        df['cumsum'] = (df['ror']-1).cumsum()
+        cumsum = df['cumsum'][-1]
+        return cumsum
 
     def bestValue(self) :
-        # 최적의 BASE
-        basedict = {}
-        for b in range(1,24,1) :
-            cumloss = self.get_loss_base(b)
-            basedict[str(round(cumloss,4))] = str(b)
-            time.sleep(0.3)
-
-        minkey = min(basedict.keys(), key=(lambda k : float(k)))
-        minBase = int(basedict[minkey])
-
         # 최적의 K 값 찾기 
         kdict = {}
         for k in range(1,10,1) :
-            cumsum = self.get_ror_k(k/10,minBase)
+            cumsum = self.__get_ror_k(k/10)
             kdict[str(round(cumsum,4))] = str(k/10)
-            time.sleep(0.3)
+            time.sleep(0.5)
 
         maxkey = max(kdict.keys(), key=(lambda k : float(k)))
         maxK = float(kdict[maxkey])
 
-        print_(self.name,f'bestValue TEST maxK = {maxK}, minBase = {minBase}')
+        # 최적의 BASE
+        basedict = {}
+        for b in range(1,24,1) :
+            cumsum = self.__get_ror_base(maxK,b)
+            basedict[str(round(cumsum,4))] = str(b)
+            time.sleep(0.5)
+
+        maxkey = max(basedict.keys(), key=(lambda k : float(k)))
+        maxBase = int(basedict[maxkey])
+        print_(self.name,f'bestValue TEST maxK = {maxK}, maxBase = {maxBase}')
         
         self.k =  maxK
-        self.base = minBase
+        self.base = maxBase
 
 
     def make_df(self) :
@@ -97,7 +104,8 @@ class Ticker :
             df = self.get_ohlcv_custom(self.base)  
             df['range'] = (df['high'] - df['low']) * self.k
             df['target'] = df['open'] + df['range'].shift(-1)
-            self.df = df.head(7)
+            df=df.dropna()
+            self.df = df
             self.target_price = self.df.iloc[0]['target'] 
             # 일봉상 5이평선이 우상향
             self.isgood = True if self.df.iloc[0]['ma5_acd'] > 0 else False
@@ -128,6 +136,7 @@ if __name__ == "__main__":
     # print('KRW-T'['KRW-T'.find('-')+1:])
 
     t  = Ticker('KRW-OMG')
-    t.bestValue()  # 최적의 k, base 를 세팅한다.
-    # t.make_df()    # k,base 를 이용하여 df 와 target_price 를 결정한다.
-    # t.get_start_time()  # base를 이용하여 하루거래의 시간대를 설정한다
+    t.bestValue()
+    t.make_df()
+    print(t.df)
+    print(t.isgood)

@@ -36,6 +36,7 @@ def best_volume_tickers() :
         ticker = Ticker(t)
         ticker.bestValue()
         ticker.make_df()
+        ticker.get_start_time()
         if  ticker.isgood :
             tickers.append(ticker)
 
@@ -53,6 +54,7 @@ def best_volume_tickers() :
             ticker = Ticker(tmp_ticker)
             ticker.bestValue()
             ticker.make_df()
+            ticker.get_start_time()
             tickers.append(ticker)
     return tickers
 
@@ -61,7 +63,8 @@ tickers = best_volume_tickers()
 print_('',f"best_volume_tickers finished.. count={len(tickers)} tickers={tickers}")
 for t in tickers :
     pd.set_option('display.max_columns', None)
-    print(t.df.head(10), flush=True)
+    print_(t.name,'------------------')
+    print(t.df.head(3), flush=True)
 loop_cnt = 0
 print_loop = 100
 
@@ -79,7 +82,8 @@ while  True :
             print_('',f"best_volume search finished.. count={len(tickers)} tickers={tickers}")
             for t in tickers :
                 pd.set_option('display.max_columns', None)
-                print(t.df.head(10), flush=True)
+                print_(t.name,'------------------')
+                print(t.df.head(3), flush=True)
             continue
 
         current_time = dt.datetime.now()
@@ -99,7 +103,7 @@ while  True :
                     current_price = float(pyupbit.get_orderbook(ticker=t.name)["orderbook_units"][0]["bid_price"])
                     avg_buy_price = account.get_avg_buy_price(t.currency)
                     if print_loop-5 <= loop_cnt < print_loop-3 :   # 운영모드로 가면 충분히 크게 바꿀것..
-                        print_(t.name,f'Enough price TEST btc=({t.currency}): {btc}, avg_buy_price = {avg_buy_price}, current_price= {current_price}')
+                        print_(t.name,f'sell price TEST btc=({t.currency}): {btc}, avg_buy_price = {avg_buy_price}, current_price= {current_price}')
                     if  current_price > avg_buy_price * 1.015 :
                         account.sell_limit_order(t.name, current_price, btc )
                         print_(t.name,'excluded from ticker list')
