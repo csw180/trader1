@@ -23,7 +23,7 @@ def best_volume_tickers() :
             df = pyupbit.get_ohlcv(k, count=3, interval='minute60')  #60분봉 3개의 거래대금 합을 가져오기 위함
             time.sleep(0.2)
             if len(df.index) > 0 :
-                if  k == 'KRW-T' :  #상장된지 얼마안된건 제외.에러남.
+                if  (k == 'KRW-T') or (k == 'KRW-CELO'):  #상장된지 얼마안된건 제외.에러남.
                     continue
                 all_tickers_value[k] = df['value'].sum()
 
