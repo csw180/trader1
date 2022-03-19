@@ -30,7 +30,7 @@ class Ticker :
         return f"<Ticker {self.name}>"
 
     def get_ohlcv_custom(self,_base) :
-        df = pyupbit.get_ohlcv(self.name, count=600, interval='minute60')
+        df = pyupbit.get_ohlcv(self.name, count=300, interval='minute60')
         df.index = df.index - dt.timedelta(hours=_base)
         df_daily = pd.DataFrame()
         df_daily['open'] =  df.open.resample('1D').first()
@@ -94,7 +94,7 @@ class Ticker :
 
     def make_df(self) :
         try :
-            df = self.get_ohlcv_custom(self.base)  
+            df = self.get_ohlcv_custom(self.base)
             df['range'] = (df['high'] - df['low']) * self.k
             df['target'] = df['open'] + df['range'].shift(-1)
             self.df = df.head(7)
@@ -129,5 +129,7 @@ if __name__ == "__main__":
 
     t  = Ticker('KRW-OMG')
     t.bestValue()  # 최적의 k, base 를 세팅한다.
+    t.make_df()
+    print(t.df)
     # t.make_df()    # k,base 를 이용하여 df 와 target_price 를 결정한다.
     # t.get_start_time()  # base를 이용하여 하루거래의 시간대를 설정한다
