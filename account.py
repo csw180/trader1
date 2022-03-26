@@ -18,7 +18,8 @@ def init() :
             dict_balances = json.load(f)
     else : 
         data1 = {'currency': 'KRW', 'balance': '1000000', 'avg_buy_price': '0'}
-        dict_balances = {'KRW': data1}
+        history = []
+        dict_balances = {'KRW': data1,'history':history}
         with open('balances.json', 'w') as f:
             json.dump(dict_balances, f)
 
