@@ -45,17 +45,15 @@ class Ticker :
         df_daily = df_daily[::-1]
         return df_daily
 
-    def get_ror_k(self,k,base) :
+    def get_minfail_k(self,k,base) :
         df = self.get_ohlcv_custom(base)  
         df['range'] = (df['high'] - df['low']) * k
         df['target'] = df['open'] + df['range'].shift(-1)
         df=df.head(7)
-
-        df['ror'] = df.apply(   \
-            lambda row : (row.close / row.target) - self.fee if row.high > row.target else 1, axis=1)
-        df['cumsum'] = (df['ror']-1).cumsum()
-        cumsum = df['cumsum'][-1]
-        return cumsum
+        df['fail'] = df.apply(   \
+            lambda row : 1 if (row.high > row.target) and (row.close / row.target <= 1.0) else 0, axis=1)
+        failcnt =  df['fail'].sum()
+        return failcnt
 
     def get_loss_base(self,base):
         df = self.get_ohlcv_custom(base)
@@ -79,16 +77,17 @@ class Ticker :
         # 최적의 K 값 찾기 
         kdict = {}
         for k in range(1,10,1) :
-            cumsum = self.get_ror_k(k/10,minBase)
-            kdict[str(round(cumsum,4))] = str(k/10)
+            failcnt = self.get_minfail_k(k/10,minBase)
+            if str(failcnt) not in kdict :
+                kdict[str(failcnt)] = str(k/10)
             time.sleep(0.3)
 
-        maxkey = max(kdict.keys(), key=(lambda k : float(k)))
-        maxK = float(kdict[maxkey])
+        minkey = min(kdict.keys(), key=(lambda k : int(k)))
+        minK = float(kdict[minkey])
 
-        print_(self.name,f'bestValue TEST maxK = {maxK}, minBase = {minBase}')
+        print_(self.name,f'bestValue TEST minK = {minK}, minBase = {minBase}')
         
-        self.k =  maxK
+        self.k =  minK
         self.base = minBase
 
 
@@ -127,9 +126,16 @@ class Ticker :
 if __name__ == "__main__":
     # print('KRW-T'['KRW-T'.find('-')+1:])
 
-    t  = Ticker('KRW-OMG')
-    t.bestValue()  # 최적의 k, base 를 세팅한다.
-    t.make_df()
-    print(t.df)
-    # t.make_df()    # k,base 를 이용하여 df 와 target_price 를 결정한다.
-    # t.get_start_time()  # base를 이용하여 하루거래의 시간대를 설정한다
+    t  = Ticker('KRW-ETC')
+    t.bestValue()
+    # kdict = {}
+    # for k in range(1,10,1) :
+    #     failcnt = t.get_minfail_k(k/10,9)
+    #     if str(failcnt) not in kdict :
+    #         kdict[str(failcnt)] = str(k/10)
+    #     time.sleep(0.3)
+
+    # minkey = min(kdict.keys(), key=(lambda k : int(k)))
+    # minK = float(kdict[minkey])
+    # print(f'kdict={kdict}')
+    # print(f'minK = {minK}')
