@@ -117,7 +117,7 @@ class Ticker :
             
         else :
             nextday = start_time + dt.timedelta(days=1)
-            end_time = start_time + dt.timedelta(days=1) - dt.timedelta(seconds=10)
+            end_time = start_time + dt.timedelta(days=1) - dt.timedelta(minutes=10)
 
         self.start_time = start_time
         self.end_time = end_time
