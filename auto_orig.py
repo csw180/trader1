@@ -110,6 +110,7 @@ while  True :
                     tickers.remove(t)
                 except ValueError :
                     pass
+                loop_cnt = 0
                 break
 
             elif  t.start_time < current_time < t.end_time :    
@@ -121,6 +122,9 @@ while  True :
                     if  ( current_price > avg_buy_price * 1.1 ) or \
                         ( current_price < avg_buy_price * 0.9 ) :
                         account.sell_limit_order(t.name, current_price, btc )
+                        tickers.remove(t)
+                        loop_cnt = 0
+                        break
                 else :
                     current_price = float(pyupbit.get_orderbook(ticker=t.name)["orderbook_units"][0]["ask_price"]) 
                     if t.target_price < current_price:
