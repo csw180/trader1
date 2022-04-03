@@ -30,7 +30,7 @@ def init() :
         history = []
         dict_balances = {'KRW': data1,'history':history}
         with open('balances.json', 'w') as f:
-            json.dump(dict_balances, f)
+            json.dump(sorted(dict_balances.items(), key=lambda item: 0 if item[0]!='history' else 1), f)
 
 def get_balance(currency):
     """잔고 조회(한종목)"""
@@ -52,7 +52,7 @@ def get_tot_buy_price() :
     ret = 0 
     for k,v in dict_balances.items() :
         if (k != 'KRW')  and (k != 'history'):
-            ret = ret + (v['balance']*v['avg_buy_price'])
+            ret = ret + (float(v['balance'])*float(v['avg_buy_price']))
     return ret
 
 def get_avg_buy_price(currency):
@@ -94,7 +94,8 @@ def  sell_limit_order(ticker,price,amount) :
         t['balance'] = balance + (price * amount)
 
         with open('balances.json', 'w') as f:
-            json.dump(dict_balances, f)
+            json.dump(sorted(dict_balances.items(), key=lambda item: 0 if item[0]!='history' else 1), f)
+
     except KeyError as ke :
         print_(ticker,f'sell_limit_order ticker not found {ke}')
     
@@ -134,11 +135,10 @@ def  buy_limit_order(ticker,price,amount) :
     t['balance'] = balance - (price * amount)
 
     with open('balances.json', 'w') as f:
-        json.dump(dict_balances, f)
+        json.dump(sorted(dict_balances.items(), key=lambda item: 0 if item[0]!='history' else 1), f)
 
 init()
 
 if __name__ == "__main__":
     init()
-    tot = get_tot_buy_price()
-    print('%d' % tot)
+    buy_limit_order('KRW-VET',1135,88)

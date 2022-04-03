@@ -68,13 +68,14 @@ for t in tickers :
     pd.set_option('display.max_columns', None)
     print_(t.name,'------------------')
     print(t.df.head(3), flush=True)
+
 loop_cnt = 0
 print_loop = 100
 
 # 자동매매 시작
 while  True :
     loop_cnt +=1
-    time.sleep(1)
+    time.sleep(2)
 
     if loop_cnt == print_loop :
         print_('',f"current tickers={tickers}")
@@ -96,17 +97,19 @@ while  True :
 
         current_time = dt.datetime.now()
         for t in  tickers :
+            time.sleep(1)
             if loop_cnt == print_loop :   # 운영모드로 가면 충분히 크게 바꿀것..
                 print_(t.name,f'{t.start_time:%Y-%m-%d %H:%M:%S} ~ {t.end_time:%Y-%m-%d %H:%M:%S}, target:{t.target_price:,.2f}, current:{pyupbit.get_current_price(t.name):,}')
 
             if  current_time > t.nextday :       
                 btc=account.get_balance(t.currency) 
                 if  btc > 0 :
+                    avg_buy_price = account.get_avg_buy_price(t.currency)
                     current_price = float(pyupbit.get_orderbook(ticker=t.name)["orderbook_units"][0]["bid_price"])
-                    print_(t.name,f'force to sell unconditionally get_balance({t.currency}): {btc}, current_price= {current_price}')
+                    print_(t.name,f'force to sell current_price= {current_price} avg_buy_price={avg_buy_price} profit/loss={(1-(current_price/avg_buy_price))*100}(%)')
                     account.sell_limit_order(t.name, current_price, btc )
                 try :
-                    print_(t.name,'excluded from ticker list')
+                    print_(t.name,'removed from ticker list')
                     tickers.remove(t)
                 except ValueError :
                     pass
@@ -114,14 +117,19 @@ while  True :
                 break
 
             elif  t.start_time < current_time < t.end_time :    
-                # 이미 잔고가 있는 종목은 목표가에 왔는지 확인하고 즉시 매도 처리 한다.
                 btc=account.get_balance(t.currency)
+                ''' 보유하고 있는 코인이 있으면 해당코인이 익절 및 손절가격에 왔는지 확인하고
+                    필요시 익절 및 손절한다.'''
                 if  btc > 0 :
                     current_price = float(pyupbit.get_orderbook(ticker=t.name)["orderbook_units"][0]["bid_price"])
                     avg_buy_price = account.get_avg_buy_price(t.currency)
+                    if loop_cnt == print_loop :
+                        print_(t.name,f'balance exist!. avg_buy_price={avg_buy_price} ,current_price={current_price}')
                     if  ( current_price > avg_buy_price * 1.1 ) or \
                         ( current_price < avg_buy_price * 0.9 ) :
+                        print_(t.name,f'force to sell current_price= {current_price} avg_buy_price={avg_buy_price} profit/loss={(1-(current_price/avg_buy_price))*100}(%)')
                         account.sell_limit_order(t.name, current_price, btc )
+                        print_(t.name,'removed from ticker list')
                         tickers.remove(t)
                         loop_cnt = 0
                         break
@@ -131,7 +139,7 @@ while  True :
                         buy_enable_balance =  _MAX_SEEDS - account.get_tot_buy_price()
                         krw = account.get_balance("KRW")
                         amount = min(buy_enable_balance,krw,_MAX_A_BUY) // current_price
-                        print_(t.name,f'buy_get_balance(KRW): {krw:,.4f} current_price {current_price:,.4} enabled amount :{amount:,.4f}')
+                        print_(t.name,f'buy_get_balance(KRW): {krw:,.4f} current_price {current_price:,.4} amount :{amount:,.4f}')
                         if (krw > 5000) and (amount > 0):
                             account.buy_limit_order(t.name, current_price, amount )
     except Exception as e:
