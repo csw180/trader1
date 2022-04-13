@@ -41,6 +41,7 @@ class Ticker :
         df_daily['value'] =  df.value.resample('1D').sum()
         df_daily['ma5'] = df_daily['close'].rolling(5).mean()
         df_daily['ma5_acd'] = df_daily['ma5'] - df_daily['ma5'].shift(1)
+
         df_daily=df_daily.dropna()
         df_daily = df_daily[::-1]
         return df_daily
@@ -49,7 +50,6 @@ class Ticker :
         df = self.get_ohlcv_custom(base)  
         df['range'] = (df['high'] - df['low']) * k
         df['target'] = df['open'] + df['range'].shift(-1)
-        df=df.head(7)
         df['fail'] = df.apply(   \
             lambda row : 1 if (row.high > row.target) and (row.close / row.target <= 1.0) else 0, axis=1)
         failcnt =  df['fail'].sum()
@@ -95,7 +95,9 @@ class Ticker :
         try :
             df = self.get_ohlcv_custom(self.base)
             df['range'] = (df['high'] - df['low']) * self.k
+            df['volatility'] = (df['close'] - df['open']) / df['open'] * 100
             df['target'] = df['open'] + df['range'].shift(-1)
+
             self.df = df.head(7)
             self.target_price = self.df.iloc[0]['target'] 
             # 일봉상 5이평선이 우상향
@@ -103,6 +105,8 @@ class Ticker :
             # 이미 목표가에 도달했었던 적있는 경우는 제외
             self.isgood = self.isgood and ( False if self.df.iloc[0]['high'] > self.target_price else True )
             self.isgood = self.isgood and ( True if self.df.iloc[1]['close'] > self.df.iloc[1]['open'] else False )
+            # 직전일에 10% 이상 상승한 양봉이 발생한 경우에는 들어가지 않는다.
+            self.isgood = self.isgood and ( False if self.df.iloc[1]['volatility'] > 10 else True )
         except Exception :
             pass
 
@@ -127,7 +131,7 @@ if __name__ == "__main__":
     # print('KRW-T'['KRW-T'.find('-')+1:])
 
     t  = Ticker('KRW-ETC')
-    t.bestValue()
+    t.make_df()
     # kdict = {}
     # for k in range(1,10,1) :
     #     failcnt = t.get_minfail_k(k/10,9)
