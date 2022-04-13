@@ -6,7 +6,7 @@ from ticker import Ticker
 import account
 
 _MAX_SEEDS = 1000000   # 이 전략으로 운용하는 전체 금액
-_MAX_A_BUY = 200000    # 한번의 매수 최대금액
+_MAX_A_BUY = 500000    # 한번의 매수 최대금액
 
 def print_(ticker,msg)  :
     if  ticker :
@@ -70,7 +70,7 @@ for t in tickers :
     print(t.df.head(3), flush=True)
 
 loop_cnt = 0
-print_loop = 100
+print_loop = 20
 
 # 자동매매 시작
 while  True :
@@ -99,21 +99,23 @@ while  True :
         for t in  tickers :
             time.sleep(1)
             if loop_cnt == print_loop :   # 운영모드로 가면 충분히 크게 바꿀것..
-                print_(t.name,f'{t.start_time:%Y-%m-%d %H:%M:%S} ~ {t.end_time:%Y-%m-%d %H:%M:%S}, target:{t.target_price:,.2f}, current:{pyupbit.get_current_price(t.name):,}')
+                print_(t.name,f'{t.start_time:%Y-%m-%d %H:%M:%S} ~ {t.end_time:%Y-%m-%d %H:%M:%S}, target:{t.target_price:,.4f}, current:{pyupbit.get_current_price(t.name):,.4f}')
 
             if  current_time > t.nextday :       
                 btc=account.get_balance(t.currency) 
                 if  btc > 0 :
                     avg_buy_price = account.get_avg_buy_price(t.currency)
                     current_price = float(pyupbit.get_orderbook(ticker=t.name)["orderbook_units"][0]["bid_price"])
-                    print_(t.name,f'force to sell current_price= {current_price} avg_buy_price={avg_buy_price} profit/loss={(1-(current_price/avg_buy_price))*100}(%)')
+                    print_(t.name,f'force to sell current_price= {current_price:,.4f} avg_buy_price={avg_buy_price:,.4f} profit/loss={(1-(current_price/avg_buy_price))*100:,.4f}(%)')
                     account.sell_limit_order(t.name, current_price, btc )
+                    pd.set_option('display.max_columns', None)
+                    print_(t.name,'------------------')
+                    print(t.df.head(3), flush=True)
                 try :
                     print_(t.name,'removed from ticker list')
                     tickers.remove(t)
                 except ValueError :
                     pass
-                loop_cnt = 0
                 break
 
             elif  t.start_time < current_time < t.end_time :    
@@ -124,14 +126,16 @@ while  True :
                     current_price = float(pyupbit.get_orderbook(ticker=t.name)["orderbook_units"][0]["bid_price"])
                     avg_buy_price = account.get_avg_buy_price(t.currency)
                     if loop_cnt == print_loop :
-                        print_(t.name,f'balance exist!. avg_buy_price={avg_buy_price} ,current_price={current_price}')
+                        print_(t.name,f'balance exist!. avg_buy_price={avg_buy_price:,.4f} ,current_price={current_price:,.4f}')
                     if  ( current_price > avg_buy_price * 1.1 ) or \
                         ( current_price < avg_buy_price * 0.9 ) :
-                        print_(t.name,f'force to sell current_price= {current_price} avg_buy_price={avg_buy_price} profit/loss={(1-(current_price/avg_buy_price))*100}(%)')
+                        print_(t.name,f'force to sell current_price= {current_price:,.4f} avg_buy_price={avg_buy_price:,.4f} profit/loss={(1-(current_price/avg_buy_price))*100:,.4f}(%)')
                         account.sell_limit_order(t.name, current_price, btc )
+                        pd.set_option('display.max_columns', None)
+                        print_(t.name,'------------------')
+                        print(t.df.head(3), flush=True)
                         print_(t.name,'removed from ticker list')
                         tickers.remove(t)
-                        loop_cnt = 0
                         break
                 else :
                     current_price = float(pyupbit.get_orderbook(ticker=t.name)["orderbook_units"][0]["ask_price"]) 
@@ -142,6 +146,9 @@ while  True :
                         print_(t.name,f'buy_get_balance(KRW): {krw:,.4f} current_price {current_price:,.4} amount :{amount:,.4f}')
                         if (krw > 5000) and (amount > 0):
                             account.buy_limit_order(t.name, current_price, amount )
+                            pd.set_option('display.max_columns', None)
+                            print_(t.name,'------------------')
+                            print(t.df.head(3), flush=True)
     except Exception as e:
         print_('',f'{e}')
         time.sleep(1)
