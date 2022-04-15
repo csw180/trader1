@@ -101,10 +101,10 @@ class Ticker :
             self.df = df.head(7)
             self.target_price = self.df.iloc[0]['target'] 
 
-            print_(self.name, f"idx0:ma5_acd > 0 {self.df.iloc[0]['ma5_acd'] } > 0 " )
-            print_(self.name, f"idx0:high <= target_price {self.df.iloc[0]['high']} <= {self.target_price} " )
-            print_(self.name, f"idx1:close > idx1:open {self.df.iloc[1]['close']} > {self.df.iloc[1]['open']} " )
-            print_(self.name, f"idx1:volatility <= 10 {self.df.iloc[1]['close']} <= 10" )
+            print_(self.name, f"idx0:ma5_acd > 0 : {self.df.iloc[0]['ma5_acd'] } > 0 " )
+            print_(self.name, f"idx0:high <= target_price : {self.df.iloc[0]['high']} <= {self.target_price} " )
+            print_(self.name, f"idx1:close > idx1:open : {self.df.iloc[1]['close']} > {self.df.iloc[1]['open']} " )
+            print_(self.name, f"idx1:volatility <= 10 : {self.df.iloc[1]['volatility']} <= 10" )
 
             # 일봉상 5이평선이 우상향
             self.isgood = True if self.df.iloc[0]['ma5_acd'] > 0 else False
