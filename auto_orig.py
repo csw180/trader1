@@ -32,7 +32,7 @@ def best_volume_tickers() :
                 all_tickers_value[k] = df['value'].sum()
 
     # 거래대금 top 10 에 해당하는 종목만 걸러낸다
-    sorted_list = sorted(all_tickers_value.items(), key=lambda x : x[1], reverse=True)[:30]
+    sorted_list = sorted(all_tickers_value.items(), key=lambda x : x[1], reverse=True)[:20]
     top_tickers = [e[0] for e in sorted_list]
     tickers = []
     for  t in  top_tickers :
